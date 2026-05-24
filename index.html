@@ -29,7 +29,7 @@
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    overflow-x: hidden;
   }
 
   header {
@@ -64,7 +64,6 @@
     overflow: hidden;
   }
 
-  /* SIDEBAR */
   .sidebar {
     width: 300px;
     min-width: 300px;
@@ -156,6 +155,18 @@
     color: var(--text);
   }
 
+  .func-item .func-edit {
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 0.85rem;
+    line-height: 1;
+    padding: 0 2px;
+    transition: color 0.15s;
+  }
+  .func-item .func-edit:hover { color: var(--accent); }
+
   .func-item .func-del {
     background: none;
     border: none;
@@ -169,6 +180,45 @@
   .func-item .func-del:hover { color: var(--accent2); }
 
   .func-item.hidden { opacity: 0.4; }
+
+  .edit-row {
+    display: flex;
+    gap: 6px;
+    margin-top: 6px;
+  }
+  .edit-input {
+    flex: 1;
+    background: var(--bg);
+    border: 1px solid var(--accent);
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.8rem;
+    padding: 5px 8px;
+    border-radius: 6px;
+    outline: none;
+  }
+  .edit-input.error { border-color: var(--accent2); }
+  .edit-save {
+    background: var(--accent);
+    border: none;
+    color: var(--bg);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.72rem;
+    padding: 5px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 700;
+  }
+  .edit-cancel {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.72rem;
+    padding: 5px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+  }
 
   .btn {
     background: none;
@@ -241,7 +291,6 @@
     min-height: 14px;
   }
 
-  /* CANVAS AREA */
   .canvas-wrap {
     flex: 1;
     position: relative;
@@ -252,6 +301,7 @@
   canvas {
     display: block;
     cursor: crosshair;
+    touch-action: none;
   }
 
   .coords-display {
@@ -308,26 +358,70 @@
     letter-spacing: 0.05em;
   }
   .reset-btn:hover { border-color: var(--accent); color: var(--accent); }
+/* MOBILE RESPONSIVE */
+@media (max-width: 900px) {
 
-  .empty-hint {
-    position: absolute;
-    top: 50%; left: 50%;
-    transform: translate(-50%,-50%);
-    text-align: center;
-    pointer-events: none;
+  body {
+    overflow: auto;
   }
-  .empty-hint h2 {
-    font-family: 'Syne', sans-serif;
-    font-size: 2rem;
-    font-weight: 800;
-    color: var(--border);
-    letter-spacing: -0.04em;
+
+  .app {
+    flex-direction: column;
+    height: auto;
   }
-  .empty-hint p {
-    color: var(--muted);
-    font-size: 0.75rem;
-    margin-top: 6px;
+
+  .sidebar {
+    width: 100%;
+    min-width: 100%;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    max-height: 45vh;
   }
+
+  .sidebar-scroll {
+    max-height: 200px;
+  }
+
+  .canvas-wrap {
+    height: 55vh;
+    min-height: 350px;
+  }
+
+  header {
+    padding: 14px 18px;
+  }
+
+  header .logo {
+    font-size: 1.15rem;
+  }
+
+  .sidebar-section {
+    padding: 14px;
+  }
+
+  .func-input,
+  .range-field input,
+  .btn {
+    font-size: 16px;
+  }
+
+  .zoom-controls {
+    bottom: 12px;
+    left: 12px;
+  }
+
+  .coords-display {
+    bottom: 12px;
+    right: 12px;
+    font-size: 0.68rem;
+  }
+
+  .zoom-btn,
+  .reset-btn {
+    width: 38px;
+    height: 38px;
+  }
+}
 </style>
 </head>
 <body>
@@ -341,7 +435,6 @@
 
 <div class="app">
 
-  <!-- SIDEBAR -->
   <div class="sidebar">
     <div class="sidebar-section">
       <label>Adaugă funcție</label>
@@ -389,10 +482,8 @@
     </div>
   </div>
 
-  <!-- CANVAS -->
   <div class="canvas-wrap" id="canvasWrap">
     <canvas id="graph"></canvas>
-
     <div class="coords-display" id="coordsDisplay">
       x: <span id="cx">—</span> &nbsp; y: <span id="cy">—</span>
     </div>
@@ -409,7 +500,6 @@ const canvas = document.getElementById('graph');
 const ctx = canvas.getContext('2d');
 const wrap = document.getElementById('canvasWrap');
 
-// State
 let funcs = [];
 let view = { xMin: -10, xMax: 10, yMin: -8, yMax: 8 };
 let dragging = false, dragStart = null, viewAtDrag = null;
@@ -424,7 +514,6 @@ function nextColor() {
   return c;
 }
 
-// Resize
 function resize() {
   canvas.width = wrap.clientWidth;
   canvas.height = wrap.clientHeight;
@@ -443,7 +532,6 @@ function adjustYRange() {
 
 window.addEventListener('resize', resize);
 
-// Coordinate transforms
 function toCanvas(x, y) {
   return [
     (x - view.xMin) / (view.xMax - view.xMin) * canvas.width,
@@ -458,15 +546,11 @@ function toWorld(px, py) {
   ];
 }
 
-// Draw
 function draw() {
   const W = canvas.width, H = canvas.height;
   ctx.clearRect(0, 0, W, H);
-
-  // Background
   ctx.fillStyle = '#0a0a0f';
   ctx.fillRect(0, 0, W, H);
-
   drawGrid();
   drawAxes();
   funcs.forEach(f => { if (f.visible) drawFunc(f); });
@@ -476,7 +560,6 @@ function drawGrid() {
   const W = canvas.width, H = canvas.height;
   const xRange = view.xMax - view.xMin;
   const yRange = view.yMax - view.yMin;
-
   const step = niceStep(xRange / 10);
 
   ctx.strokeStyle = '#1a1a2a';
@@ -495,7 +578,6 @@ function drawGrid() {
     ctx.beginPath(); ctx.moveTo(0, py); ctx.lineTo(W, py); ctx.stroke();
   }
 
-  // Labels
   ctx.fillStyle = '#333350';
   ctx.font = '10px Space Mono, monospace';
   ctx.textAlign = 'center';
@@ -519,19 +601,13 @@ function drawAxes() {
   const W = canvas.width, H = canvas.height;
   ctx.strokeStyle = '#2a2a3f';
   ctx.lineWidth = 1.5;
-
   const [ox, oy] = toCanvas(0, 0);
-
-  // X axis
   if (oy >= 0 && oy <= H) {
     ctx.beginPath(); ctx.moveTo(0, oy); ctx.lineTo(W, oy); ctx.stroke();
   }
-  // Y axis
   if (ox >= 0 && ox <= W) {
     ctx.beginPath(); ctx.moveTo(ox, 0); ctx.lineTo(ox, H); ctx.stroke();
   }
-
-  // Origin label
   ctx.fillStyle = '#333350';
   ctx.font = '10px Space Mono, monospace';
   ctx.textAlign = 'right';
@@ -544,15 +620,12 @@ function drawFunc(f) {
   const W = canvas.width;
   const steps = W * 2;
   const dx = (view.xMax - view.xMin) / steps;
-
   ctx.strokeStyle = f.color;
   ctx.lineWidth = 2.2;
   ctx.lineJoin = 'round';
   ctx.lineCap = 'round';
-
   let started = false;
   ctx.beginPath();
-
   for (let i = 0; i <= steps; i++) {
     const x = view.xMin + i * dx;
     let y;
@@ -560,17 +633,12 @@ function drawFunc(f) {
       y = f.compiled.evaluate({ x });
       if (typeof y !== 'number' || isNaN(y) || !isFinite(y)) { started = false; continue; }
     } catch { started = false; continue; }
-
-    // Discontinuity detection
     if (started) {
       const prevX = view.xMin + (i - 1) * dx;
       let prevY;
       try { prevY = f.compiled.evaluate({ x: prevX }); } catch { prevY = NaN; }
-      if (Math.abs(y - prevY) > (view.yMax - view.yMin) * 2) {
-        started = false;
-      }
+      if (Math.abs(y - prevY) > (view.yMax - view.yMin) * 2) { started = false; }
     }
-
     const [px, py] = toCanvas(x, y);
     if (!started) { ctx.moveTo(px, py); started = true; }
     else ctx.lineTo(px, py);
@@ -578,7 +646,6 @@ function drawFunc(f) {
   ctx.stroke();
 }
 
-// Helpers
 function niceStep(raw) {
   const pow = Math.pow(10, Math.floor(Math.log10(raw)));
   const norm = raw / pow;
@@ -593,32 +660,27 @@ function fmt(n) {
   return parseFloat(n.toPrecision(4)).toString();
 }
 
-// Add function
 function addFunction() {
   const input = document.getElementById('funcInput');
   const errMsg = document.getElementById('errMsg');
-  const expr = input.value.trim();
+  const expr = input.value.trim().toLowerCase();
   if (!expr) return;
-
   let compiled;
   try {
     compiled = math.compile(expr);
-    compiled.evaluate({ x: 0 }); // test
+    compiled.evaluate({ x: 0 });
   } catch (e) {
     errMsg.textContent = 'Eroare: expresie invalidă.';
     input.classList.add('error');
     return;
   }
-
   errMsg.textContent = '';
   input.classList.remove('error');
-
   const color = nextColor();
   const f = { id: Date.now(), expr, compiled, color, visible: true };
   funcs.push(f);
   input.value = '';
   renderFuncList();
-
   draw();
 }
 
@@ -638,9 +700,10 @@ function renderFuncList() {
     return;
   }
   list.innerHTML = funcs.map(f => `
-    <div class="func-item ${f.visible ? '' : 'hidden'}" onclick="toggleFunc(${f.id})">
+    <div class="func-item ${f.visible ? '' : 'hidden'}" data-id="${f.id}" onclick="toggleFunc(${f.id})">
       <div class="func-dot" style="background:${f.color}"></div>
       <div class="func-expr" title="${f.expr}">${f.expr}</div>
+      <button class="func-edit" onclick="event.stopPropagation();startEdit(${f.id})" title="Editează">✎</button>
       <button class="func-del" onclick="event.stopPropagation();removeFunc(${f.id})">×</button>
     </div>
   `).join('');
@@ -657,6 +720,53 @@ function removeFunc(id) {
   draw();
 }
 
+function startEdit(id) {
+  const f = funcs.find(f => f.id === id);
+  if (!f) return;
+  cancelEdit();
+  const list = document.getElementById('funcList');
+  const item = list.querySelector(`[data-id="${id}"]`);
+  if (!item) return;
+  const row = document.createElement('div');
+  row.className = 'edit-row';
+  row.innerHTML = `
+    <input class="edit-input" id="editInput-${id}" value="${f.expr}" spellcheck="false">
+    <button class="edit-save" onclick="saveEdit(${id})">OK</button>
+    <button class="edit-cancel" onclick="cancelEdit()">✕</button>
+  `;
+  item.after(row);
+  const inp = document.getElementById(`editInput-${id}`);
+  inp.focus();
+  inp.addEventListener('keydown', e => {
+    if (e.key === 'Enter') saveEdit(id);
+    if (e.key === 'Escape') cancelEdit();
+  });
+}
+
+function saveEdit(id) {
+  const input = document.getElementById(`editInput-${id}`);
+  if (!input) return;
+const expr = input.value.trim().toLowerCase();
+  if (!expr) return;
+  let compiled;
+  try {
+    compiled = math.compile(expr);
+    compiled.evaluate({ x: 0 });
+  } catch {
+    input.classList.add('error');
+    return;
+  }
+  const f = funcs.find(f => f.id === id);
+  if (f) { f.expr = expr; f.compiled = compiled; }
+  cancelEdit();
+  renderFuncList();
+  draw();
+}
+
+function cancelEdit() {
+  document.querySelectorAll('.edit-row').forEach(r => r.remove());
+}
+
 function clearAll() {
   funcs = [];
   colorIdx = 0;
@@ -665,7 +775,6 @@ function clearAll() {
   draw();
 }
 
-// Domain inputs
 document.getElementById('xMin').addEventListener('change', () => {
   const xMin = parseFloat(document.getElementById('xMin').value);
   const xMax = parseFloat(document.getElementById('xMax').value);
@@ -683,7 +792,6 @@ document.getElementById('xMax').addEventListener('change', () => {
   }
 });
 
-// Mouse
 canvas.addEventListener('mousemove', e => {
   const rect = canvas.getBoundingClientRect();
   const px = e.clientX - rect.left;
@@ -691,7 +799,6 @@ canvas.addEventListener('mousemove', e => {
   const [wx, wy] = toWorld(px, py);
   document.getElementById('cx').textContent = wx.toFixed(3);
   document.getElementById('cy').textContent = wy.toFixed(3);
-
   if (dragging && dragStart) {
     const [dx, dy] = [px - dragStart.px, py - dragStart.py];
     const xRange = viewAtDrag.xMax - viewAtDrag.xMin;
@@ -731,7 +838,6 @@ canvas.addEventListener('wheel', e => {
   draw();
 }, { passive: false });
 
-// Touch support
 let lastTouchDist = null;
 canvas.addEventListener('touchstart', e => {
   if (e.touches.length === 1) {
@@ -788,7 +894,6 @@ function resetView() {
   draw();
 }
 
-// Init
 resize();
 </script>
 </body>
