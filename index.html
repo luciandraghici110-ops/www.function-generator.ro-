@@ -586,7 +586,10 @@ canvas.addEventListener('wheel', e=>{
   const rect=canvas.getBoundingClientRect(), [wx,wy]=toWorld(e.clientX-rect.left,e.clientY-rect.top);
   const factor=e.deltaY>0?1.12:0.88;
   view.xMin=wx+(view.xMin-wx)*factor; view.xMax=wx+(view.xMax-wx)*factor;
-  view.yMin=wy+(view.yMin-wy)*factor; view.yMax=wy+(view.yMax-wy)*factor; draw();
+  view.yMin=wy+(view.yMin-wy)*factor; view.yMax=wy+(view.yMax-wy)*factor;
+  draw(true);
+  clearTimeout(window._zoomTimer);
+  window._zoomTimer = setTimeout(()=>draw(), 150);
 },{passive:false});
 
 let lastTouchDist=null;
@@ -613,7 +616,10 @@ canvas.addEventListener('touchend', ()=>{dragging=false;lastTouchDist=null;draw(
 function zoom(factor){
   const cx=(view.xMin+view.xMax)/2, cy=(view.yMin+view.yMax)/2;
   const xRange=(view.xMax-view.xMin)*factor, yRange=(view.yMax-view.yMin)*factor;
-  view.xMin=cx-xRange/2; view.xMax=cx+xRange/2; view.yMin=cy-yRange/2; view.yMax=cy+yRange/2; draw();
+  view.xMin=cx-xRange/2; view.xMax=cx+xRange/2; view.yMin=cy-yRange/2; view.yMax=cy+yRange/2;
+  draw(true);
+  clearTimeout(window._zoomTimer);
+  window._zoomTimer = setTimeout(()=>draw(), 150);
 }
 
 function resetView(){ view={xMin:-10,xMax:10,yMin:-8,yMax:8}; adjustYRange(); draw(); }
