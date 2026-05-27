@@ -171,7 +171,9 @@
         <strong>Constante:</strong> pi, e, π<br>
         <strong>Acceptă:</strong> ln, tg, arctg, ×, ÷, ²
       </div>
+
       <button class="btn" onclick="clearAll()" style="width:100%">🗑 Șterge tot</button>
+  
     </div>
   </div>
   <div class="canvas-wrap" id="canvasWrap">
@@ -189,10 +191,17 @@
   const canvas = document.getElementById('graph');
 const ctx = canvas.getContext('2d');
 const wrap = document.getElementById('canvasWrap');
+let performanceMode = false;
   let drawPending = false;
 
-function requestDraw(fast = false) {
+  function pulseTrig() {
+  pulseTime = 1;
+  requestDraw();
+}
+
+function requestDraw(fast = performanceMode) {
   if (drawPending) return;
+
 
   drawPending = true;
 
@@ -200,9 +209,10 @@ function requestDraw(fast = false) {
     drawPending = false;
     draw(fast);
   });
+  
 }
   function drawFunc(f) {
-  const step = (view.xMax - view.xMin) / 1200;
+ const step = (view.xMax - view.xMin) / 3000;
 
   ctx.strokeStyle = f.color;
   ctx.lineWidth = 2.5;
@@ -349,6 +359,9 @@ function draw(fast = false) {
   const H = wrap.clientHeight;
 
   ctx.clearRect(0, 0, W, H);
+  ctx.imageSmoothingEnabled = true;
+ctx.lineJoin = 'round';
+ctx.lineCap = 'round';
 
   ctx.fillStyle = '#0a0a0f';
   ctx.fillRect(0, 0, W, H);
@@ -431,7 +444,7 @@ function nextColor() {
 function drawImplicit(f, fast = false) {
   // Marching squares - contour la 0
   const W = wrap.clientWidth, H = wrap.clientHeight;
-const GRID = fast ? 120 : 300;
+const GRID = fast ? 180 : 650;
   const dx = (view.xMax - view.xMin) / GRID;
   const dy = (view.yMax - view.yMin) / GRID;
 
@@ -705,25 +718,12 @@ function resetView() {
 }
 
 
+
 document.body.style.overscrollBehavior = "none";
 window.addEventListener('DOMContentLoaded', () => {
   resize();
-  function resize() {
-  const dpr = window.devicePixelRatio || 1;
-
-  canvas.width = wrap.clientWidth * dpr;
-  canvas.height = wrap.clientHeight * dpr;
-
-  canvas.style.width = wrap.clientWidth + 'px';
-  canvas.style.height = wrap.clientHeight + 'px';
-
-  ctx.setTransform(1, 0, 0, 1, 0, 0);
-  ctx.scale(dpr, dpr);
-
-  requestDraw();
-}
   requestDraw();
 });
 </script>
 </body>
-</html>
+</html> fa asta sa nu mai fie lagauit cand ma misc pe ecran pe grafic daca sunt facute deja cateva
